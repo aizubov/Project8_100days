@@ -75,8 +75,12 @@ class ViewController: UIViewController {
         clear.addTarget(self, action: #selector(clearTapped), for: .touchUpInside)
         view.addSubview(clear)
         
+        
         let buttonsView = UIView()
         buttonsView.translatesAutoresizingMaskIntoConstraints = false
+        buttonsView.layer.cornerRadius = 10
+        buttonsView.layer.borderWidth = 0.5
+        buttonsView.layer.borderColor = UIColor.lightGray.cgColor
         view.addSubview(buttonsView)
         
         NSLayoutConstraint.activate([
@@ -151,6 +155,8 @@ class ViewController: UIViewController {
 
     @objc func submitTapped(_ sender: UIButton) {
         guard let answerText = currentAnswer.text else { return }
+        
+        if answerText.isEmpty { return }
 
         if let solutionPosition = solutions.firstIndex(of: answerText) {
             activatedButtons.removeAll()
@@ -162,13 +168,27 @@ class ViewController: UIViewController {
             currentAnswer.text = ""
             score += 1
 
-            if score % 7 == 0 {
+            if letterButtons.allSatisfy({$0.isHidden}) {
                 let ac = UIAlertController(title: "Well done!", message: "Are you ready for the next level?", preferredStyle: .alert)
                 ac.addAction(UIAlertAction(title: "Let's go!", style: .default, handler: levelUp))
                 present(ac, animated: true)
             }
+        } else {
+            score -= 1
+            let ac = UIAlertController(title: "Wrong", message: "No matches found!", preferredStyle: .alert)
+            ac.addAction(UIAlertAction(title: "OK", style: .default, handler: clearForced))
+            present(ac, animated: true)
         }
     }
+    
+    func clearForced(action: UIAlertAction) {
+        currentAnswer.text = ""
+        for btn in activatedButtons {
+            btn.isHidden = false
+        }
+        activatedButtons.removeAll()
+    }
+    
 
     @objc func clearTapped(_ sender: UIButton) {
         currentAnswer.text = ""
@@ -190,7 +210,7 @@ class ViewController: UIViewController {
             btn.isHidden = false
         }
     }
-    func loadLevel() {
+    @objc func loadLevel() {
         var clueString = ""
         var solutionString = ""
         var letterBits = [String]()
